@@ -47,6 +47,8 @@ void saveGoalTime(double);
 
 int startSensor(int camera);
 
+String getCurrentDate();
+
 
 
 
@@ -76,19 +78,19 @@ const int FRAME_RATE = 10;
 
 int main(int argc, char *argv[]) {
 
-
+	
 	//Avvio le telecamere in multithread cattura pallone(thread porta)
 	std::thread t1(startSensor,0),t2(startSensor,1);
 
 	//Avvio dei thread che si occupano della registrazione della partita (1 thread per camera)
-	//std:thread t3(startRecordMatch, "http://192.168.226.101:8080/video?x.mjpeg"), t4(startRecordMatch, "http://192.168.226.102:8080/video?x.mjpeg");
+	std:thread t3(startRecordMatch, "http://192.168.226.102:8080/video?x.mjpeg"), t4(startRecordMatch, "http://192.168.226.102:8080/video?x.mjpeg");
 
 
 	t1.join();
 	t2.join();
 
-	//t3.join();
-	//t4.join();
+	t3.join();
+	t4.join();
 
 }
 
@@ -174,7 +176,7 @@ void startRecordMatch(string cameraAddress) {
 
 
 
-	VideoCapture vcap(cameraAddress);
+	VideoCapture vcap(0);
 
 	if (!vcap.isOpened()) {
 
@@ -184,19 +186,13 @@ void startRecordMatch(string cameraAddress) {
 
 	}
 
-
-
 	int frame_width = vcap.get(CV_CAP_PROP_FRAME_WIDTH);
 
 	int frame_height = vcap.get(CV_CAP_PROP_FRAME_HEIGHT);
 
-	VideoWriter video("C:\\Users\\Public\\Videos\\out.avi", CV_FOURCC('M', 'J', 'P', 'G'), 10, Size(frame_width, frame_height), true);
-
-
+	VideoWriter video("C:\\Users\\salvatore\\Videos\\"+cameraAddress+".avi", CV_FOURCC('M', 'J', 'P', 'G'), 10, Size(frame_width, frame_height), true);
 
 	for (;;) {
-
-
 
 		Mat frame;
 
@@ -289,13 +285,6 @@ void startRecordMatch(string cameraAddress) {
 	*/
 
 }
-
-
-
-
-
-
-
 
 
 void cutVideo(string filename, double start_time_in_min, double stop_time_in_min) {
@@ -714,6 +703,8 @@ int startSensor(int camera) {
 
 				saveGoalTime(sysTimeMS);
 
+				
+
 			}
 
 		}
@@ -738,4 +729,19 @@ int startSensor(int camera) {
 
 
 
+}
+
+
+String getCurrentDate() {
+
+	time_t rawtime;
+	struct tm * timeinfo;
+
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+	char date[11];
+
+	sprintf(date, "%02d%02d%04d", timeinfo->tm_mday, timeinfo->tm_mon + 1, timeinfo->tm_year +1900);
+
+	return date;
 }
