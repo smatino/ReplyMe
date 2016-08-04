@@ -308,17 +308,13 @@ void cutVideo(string filename, int camera, double goal) {
 
 	VideoWriter video("C:\\Users\\smatino\\Videos\\Result.wmv", CV_FOURCC('W', 'M', 'V', '2'), 30, SizeOfFrame, true);
 
-
+	int frameCount = 0;
 
 	for (;;)
 	{
 
 		bool Is = cap.grab();
-
-
-		double length = int(cap.get(cv:CAP_PROP_FRAME_COUNT))
-		print(length)
-
+	
 		if (Is == false) {
 
 			cout << "cannot grab video frame" << endl;
@@ -338,12 +334,19 @@ void cutVideo(string filename, int camera, double goal) {
 			imshow("Video", LoadedImage);
 			//waitKey(10);
 
+			double timeBeforeGoal = time(0) - 8;
+
+			double framereate = cap.get(CV_CAP_PROP_FPS);
+
+			double start_frame_count = framereate * 60 * timeBeforeGoal;
+			double stop_frame_count = framereate * 60 * goal;
+
 			// check of left shift key change its state 
 			// if Left Shift is pressed write video to file
-			double timeBeforeGoal = time(0) - 30;
-
+			
+			frameCount++;
 			//if (GetKeyState(VK_LSHIFT) == true)
-			if(timeBeforeGoal < goal)
+			if(frameCount >= start_frame_count&&frameCount<stop_frame_count)
 			{
 
 				cout << "Saving video" << endl;
