@@ -1,3 +1,6 @@
+#include <Windows.h>
+#include <fstream>
+#include <iostream>
 #include <stdio.h>
 #include <math.h>
 #include <time.h> 
@@ -12,7 +15,8 @@
 #include <iostream>   // for standard I/O
 #include <string>   // for strings
 #include <thread>
-
+#include <ctime>
+#include "opencv2\highgui.hpp"
 
 
 
@@ -41,11 +45,11 @@ bool circlesBeHomies(float*, float*);
 
 void startRecordMatch(string);
 
-void cutVideo(string, double, double);
+void cutVideo(string, int, double);
 
 void saveGoalTime(double);
 
-int startSensor(int camera);
+int startSensor(int, clock_t);
 
 String getCurrentDate();
 
@@ -78,19 +82,24 @@ const int FRAME_RATE = 10;
 
 int main(int argc, char *argv[]) {
 
+	double goalTime = time(0);
+
+	std:thread t1(cutVideo, "C:\\Users\\smatino\\Videos\\Angles.mp4", 0, goalTime);
+	t1.join();
+
 	
 	//Avvio le telecamere in multithread cattura pallone(thread porta)
-	std::thread t1(startSensor,0),t2(startSensor,1);
+	//std::thread t1(startSensor,0, begin),t2(startSensor,1, begin);
 
 	//Avvio dei thread che si occupano della registrazione della partita (1 thread per camera)
-	std:thread t3(startRecordMatch, "http://192.168.226.102:8080/video?x.mjpeg"), t4(startRecordMatch, "http://192.168.226.102:8080/video?x.mjpeg");
+	//std:thread t3(startRecordMatch, "http://192.168.226.102:8080/video?x.mjpeg"), t4(startRecordMatch, "http://192.168.226.102:8080/video?x.mjpeg");
 
 
-	t1.join();
-	t2.join();
+	//t1.join();
+	//t2.join();
 
-	t3.join();
-	t4.join();
+	//t3.join();
+	//t4.join();
 
 }
 
@@ -101,13 +110,9 @@ CvSeq* getCirclesInImage(IplImage* frame, CvMemStorage* storage, IplImage* grays
 	// houghification
 
 	// Convert to a single-channel, grayspace image
-
 	cvCvtColor(frame, grayscaleImg, CV_BGR2GRAY);
 
-
-
 	// Gaussian filter for less noise
-
 	cvSmooth(grayscaleImg, grayscaleImg, CV_GAUSSIAN, 7, 9);
 
 
@@ -131,8 +136,6 @@ CvSeq* getCirclesInImage(IplImage* frame, CvMemStorage* storage, IplImage* grays
 	return circles;
 
 }
-
-
 
 float eucdist(CvPoint c1, CvPoint c2) {
 
@@ -174,9 +177,7 @@ bool circlesBeHomies(float* c1, float* c2) {
 
 void startRecordMatch(string cameraAddress) {
 
-
-
-	VideoCapture vcap(0);
+	VideoCapture vcap(cameraAddress);
 
 	if (!vcap.isOpened()) {
 
@@ -190,7 +191,7 @@ void startRecordMatch(string cameraAddress) {
 
 	int frame_height = vcap.get(CV_CAP_PROP_FRAME_HEIGHT);
 
-	VideoWriter video("C:\\Users\\salvatore\\Videos\\"+cameraAddress+".avi", CV_FOURCC('M', 'J', 'P', 'G'), 10, Size(frame_width, frame_height), true);
+	VideoWriter video("C:\\Users\\salvatore\\Videos\\"+ getCurrentDate()+"\\"+cameraAddress+".avi", CV_FOURCC('M', 'J', 'P', 'G'), 10, Size(frame_width, frame_height), true);
 
 	for (;;) {
 
@@ -287,13 +288,140 @@ void startRecordMatch(string cameraAddress) {
 }
 
 
-void cutVideo(string filename, double start_time_in_min, double stop_time_in_min) {
+void cutVideo(string filename, int camera, double goal) {
 
+
+	Mat LoadedImage;
+	// Video capture from file  opt.MOV in project directory
+	VideoCapture cap("C:\\Angles.avi");
+
+
+	// This is one of the most important thing
+	// Sizes
+	//Your VideoWriter Size must correspond with input video.
+
+	// Size of your output video 
+	Size SizeOfFrame = cv::Size(800, 600);
+
+	// On windows write video into Result.wmv with codec W M V 2 at 30 FPS 
+	// and use your predefined Size for siplicity 
+
+	VideoWriter video("C:\\Users\\smatino\\Videos\\Result.wmv", CV_FOURCC('W', 'M', 'V', '2'), 30, SizeOfFrame, true);
+
+
+
+	for (;;)
+	{
+
+		bool Is = cap.grab();
+
+
+		double length = int(cap.get(cv:CAP_PROP_FRAME_COUNT))
+		print(length)
+
+		if (Is == false) {
+
+			cout << "cannot grab video frame" << endl;
+
+		}
+		else {
+
+			// Receive video from your source 
+			cap.retrieve(LoadedImage, CV_CAP_OPENNI_BGR_IMAGE);
+
+			// Resize your video to your VideoWriter size
+			// Again sizes must correspond 
+			resize(LoadedImage, LoadedImage, Size(800, 600));
+
+			// Preview video all frames
+			namedWindow("Video", WINDOW_AUTOSIZE);
+			imshow("Video", LoadedImage);
+			//waitKey(10);
+
+			// check of left shift key change its state 
+			// if Left Shift is pressed write video to file
+			double timeBeforeGoal = time(0) - 30;
+
+			//if (GetKeyState(VK_LSHIFT) == true)
+			if(timeBeforeGoal < goal)
+			{
+
+				cout << "Saving video" << endl;
+				// Save video into file if  GetKeyState(VK_LSHIFT)  state changes
+				video.write(LoadedImage);
+				//waitKey(10);
+				timeBeforeGoal++;
+
+			}
+			else {
+
+				// else nothing to write  only show preview
+				cout << "Only Frame preview" << endl;
+
+			}
+
+		}
+	}
+
+	/*
+	Mat LoadedImage;
+	// Video capture from file  opt.MOV in project directory
+	VideoCapture cap("C:\\Angles.avi");
+
+	// Size of your output video 
+	Size SizeOfFrame = cv::Size(800, 600);
+
+	VideoWriter video("C:\\Result.wmv", CV_FOURCC('W', 'M', 'V', '2'), 30, SizeOfFrame, true);
+
+	for (;;)
+	{
+
+		bool Is = cap.grab();
+		if (Is == false) {
+
+			cout << "cannot grab video frame" << endl;
+
+		}
+		else {
+
+			// Receive video from your source 
+			cap.retrieve(LoadedImage, CV_CAP_OPENNI_BGR_IMAGE);
+
+			// Resize your video to your VideoWriter size
+			// Again sizes must correspond 
+			resize(LoadedImage, LoadedImage, Size(800, 600));
+
+			// Preview video all frames
+			namedWindow("Video", WINDOW_AUTOSIZE);
+			imshow("Video", LoadedImage);
+			//waitKey(10);
+
+			// check of left shift key change its state 
+			// if Left Shift is pressed write video to file
+
+			double timeBeforeGoal = time(0) - 30;
+			if (timeBeforeGoal < goal)
+			{
+
+				cout << "Saving video" << endl;
+				// Save video into file if  GetKeyState(VK_LSHIFT)  state changes
+				video.write(LoadedImage);				
+				timeBeforeGoal++;
+
+			}			
+		}		
+	}
+	*/
+
+	/*
 	int i = 0;
 
 	int frame_no = 0;
 
-	char name[1000] = "C:\\Users\\Public\\Videos\\test.avi";
+
+	filename = "C:\\Users\\smatino\\Videos\\Angles.mp4";
+
+	char name[1000] = "C:\\Users\\smatino\\Videos\\Angles.mp4";
 
 	CvVideoWriter *writer = 0;
 
@@ -302,31 +430,19 @@ void cutVideo(string filename, double start_time_in_min, double stop_time_in_min
 	char fileToCut[1024];
 
 
-
-
-
 	double start_frame_count = FRAME_RATE * 60 * start_time_in_min;
 
 	double stop_frame_count = FRAME_RATE * 60 * stop_time_in_min;
-
-
-
-
-
+	
 	strncpy_s(fileToCut, filename.c_str(), sizeof(fileToCut));
 
 	fileToCut[sizeof(fileToCut) - 1] = 0;
 
-
-
 	CvCapture* capture = cvCreateFileCapture(fileToCut);
-
-
 
 	IplImage* frame;
 
 	//cout << "Press 's' to start recording, 'q' to stop recording 'Esc' to exit" << endl;
-
 
 
 	while (1)
@@ -388,6 +504,8 @@ void cutVideo(string filename, double start_time_in_min, double stop_time_in_min
 	cvReleaseVideoWriter(&writer);
 
 	return;
+
+	*/
 
 }
 
@@ -460,28 +578,14 @@ void saveGoalTime(double sysTimeMS) {
 
 
 
-int startSensor(int camera) {
-
-
-
-	//Start Video Registration
-
-	//startRecordCamara();
-
-	//cutVideo("C:\\Users\\Public\\Videos\\out.avi", 0.1, 0.15);
-
-
-
+int startSensor(int camera, clock_t beginMatch) {
 
 
 	CvCapture *capture = 0; //The camera
 
 	IplImage* frame = 0; //The images you bring out of the camera
 
-
-
-						 //Open the camera
-
+	//Open the camera
 	capture = cvCaptureFromCAM(camera);
 
 	if (!capture) {
@@ -513,13 +617,11 @@ int startSensor(int camera) {
 
 
 	//Used as storage element for Hough circles
-
 	CvMemStorage* storage = cvCreateMemStorage(0);
 
 
 
 	// Grayscale image
-
 	IplImage* grayscaleImg = cvCreateImage(cvSize(640, 480), 8/*depth*/, 1/*channels*/);
 
 
@@ -701,7 +803,9 @@ int startSensor(int camera) {
 				double sysTimeMS = sysTime * 1000;
 
 
-				saveGoalTime(sysTimeMS);
+				//saveGoalTime(sysTimeMS);
+				//Effettuo il taglio del file tramite thread
+				std:thread t1(cutVideo,"",camera, time(0));
 
 				
 
