@@ -39,8 +39,6 @@ int startSensor(int, double);
 String getCurrentDate();
 
 
-
-
 const int MIN_IDENT = 50;
 const int MAX_RAD_DIFF = 10;
 const int HISTORY_SIZE = 5;
@@ -49,10 +47,9 @@ const int Y_THRESH = 15;
 const int R_THRESH = 20;
 const int MATCHES_THRESH = 3;
 const int HUE_BINS = 32;
-const int FRAME_RATE = 10;
-const int TIME_BEFORE_GOAL = 10;
-const int TIME_AFTER_GOAL = 5;
-const String PATH_TO_REGISTRATION = "C:\\Users\\salvatore\\Videos\\Result_";
+const int TIME_BEFORE_GOAL = 8;
+const int TIME_AFTER_GOAL = 3;
+const String PATH_TO_REGISTRATION = "C:\\Users\\salvatore\\Videos\\Goal_";
 
 
 int main(int argc, char *argv[]) {
@@ -253,7 +250,7 @@ void startRecordMatch(string cameraAddress) {
 }
 
 
-void cutVideo(string filename, int camera, double goal) {
+void cutVideo(string fileFromOppositeCamera, int camera, double goal) {
 
 
 	Mat LoadedImage;
@@ -273,7 +270,7 @@ void cutVideo(string filename, int camera, double goal) {
 
 	String fileName = PATH_TO_REGISTRATION + to_string(time(0));
 
-	filename = fileName + ".wmv";
+	fileName = fileName + ".wmv";
 
 	VideoWriter video(fileName, CV_FOURCC('W', 'M', 'V', '2'), 30, SizeOfFrame, true);
 
@@ -307,27 +304,18 @@ void cutVideo(string filename, int camera, double goal) {
 			double start_frame_count = framereate  * (goal - TIME_BEFORE_GOAL);
 			double stop_frame_count = framereate * (goal + TIME_AFTER_GOAL);
 
-			// check of left shift key change its state 
-			// if Left Shift is pressed write video to file
-			
 			frameCount++;
-			//if (GetKeyState(VK_LSHIFT) == true)
+			
 			if(frameCount >= start_frame_count&&frameCount<stop_frame_count)
 			{
 
-				cout << "Saving video" << endl;
-				// Save video into file if  GetKeyState(VK_LSHIFT)  state changes
+				//Salvataggio del video su un nuovo file
 				video.write(LoadedImage);
 				
 			}
-			else {
-				if (frameCount > stop_frame_count) {
+			else if (frameCount > stop_frame_count) {
 					break;
-				}
-				// else nothing to write  only show preview
-				cout << "Only Frame preview" << endl;
-
-			}
+			}				
 
 		}
 	}
@@ -506,55 +494,8 @@ int startSensor(int camera, double beginMatch) {
 
 				cvResetImageROI(frame);
 
-				const char *color;
-
-				switch (highestBinSeen) {
-
-				case 2: case 3: case 4:
-
-					color = "orange";
-
-					break;
-
-				case 5: case 6: case 7: case 8:
-
-					color = "yellow";
-
-					break;
-
-				case 9: case 10: case 11: case 12:
-
-				case 13: case 14: case 15: case 16:
-
-					color = "green";
-
-					break;
-
-				case 17: case 18: case 19: case 20:
-
-				case 21: case 22: case 23:
-
-					color = "blue";
-
-					break;
-
-				case 24: case 25: case 26: case 27:
-
-				case 28:
-
-					color = "purple";
-
-					break;
-
-				default:
-
-					color = "red";
-
-				}
-
 				char label[64];
-
-				sprintf_s(label, "color: %s", color);
+				sprintf_s(label, "GOAL");
 
 				drawCircleAndLabel(frame, p, label);
 
@@ -565,7 +506,7 @@ int startSensor(int camera, double beginMatch) {
 
 				//Effettuo il taglio del file tramite thread
 				std:thread c1(cutVideo,"",camera, goalInSec);	
-				c1.join();
+				c1.detach();
 
 			}
 
