@@ -20,21 +20,6 @@
 
 
 
-
-/* MySQL Connector/C++ specific headers */
-
-#include <cppconn/driver.h>
-#include <cppconn/connection.h>
-#include <cppconn/statement.h>
-#include <cppconn/prepared_statement.h>
-#include <cppconn/resultset.h>
-#include <cppconn/metadata.h>
-#include <cppconn/resultset_metadata.h>
-#include <cppconn/exception.h>
-#include <warning.h>
-
-
-
 CvSeq* getCirclesInImage(IplImage*, CvMemStorage*, IplImage*);
 
 float eucdist(CvPoint, CvPoint);
@@ -47,9 +32,9 @@ void startRecordMatch(string);
 
 void cutVideo(string, int, double);
 
-void saveGoalTime(double);
+//void saveGoalTime(double);
 
-int startSensor(int, clock_t);
+int startSensor(int, double);
 
 String getCurrentDate();
 
@@ -65,37 +50,25 @@ const int R_THRESH = 20;
 const int MATCHES_THRESH = 3;
 const int HUE_BINS = 32;
 const int FRAME_RATE = 10;
-
-
-#define DBHOST "tcp://192.168.0.1:3306"
-
-#define USER "root"
-
-#define PASSWORD "root"
-
-#define DATABASE "replyme"
-
-#define NUMOFFSET 100
-
-#define COLNAME 200
+const int TIME_BEFORE_GOAL = 10;
+const int TIME_AFTER_GOAL = 5;
+const String PATH_TO_REGISTRATION = "C:\\Users\\salvatore\\Videos\\Result_";
 
 
 int main(int argc, char *argv[]) {
 
-	double goalTime = time(0);
 
-	std:thread t1(cutVideo, "C:\\Users\\smatino\\Videos\\Angles.mp4", 0, goalTime);
-	t1.join();
+	//Segno l'inizio della partita per capire come calcolare il tempo
+	double startMatch = time(0);
 
-	
 	//Avvio le telecamere in multithread cattura pallone(thread porta)
-	//std::thread t1(startSensor,0, begin),t2(startSensor,1, begin);
+	std::thread t1(startSensor, 0, startMatch);// , t2(startSensor, 1, startMatch);
 
 	//Avvio dei thread che si occupano della registrazione della partita (1 thread per camera)
 	//std:thread t3(startRecordMatch, "http://192.168.226.102:8080/video?x.mjpeg"), t4(startRecordMatch, "http://192.168.226.102:8080/video?x.mjpeg");
 
 
-	//t1.join();
+	t1.join();
 	//t2.join();
 
 	//t3.join();
@@ -115,13 +88,8 @@ CvSeq* getCirclesInImage(IplImage* frame, CvMemStorage* storage, IplImage* grays
 	// Gaussian filter for less noise
 	cvSmooth(grayscaleImg, grayscaleImg, CV_GAUSSIAN, 7, 9);
 
-
-
 	//Detect the circles in the image
-
-	CvSeq* circles = cvHoughCircles(grayscaleImg,
-
-		storage,
+	CvSeq* circles = cvHoughCircles(grayscaleImg,storage,
 
 		CV_HOUGH_GRADIENT,
 
@@ -212,9 +180,6 @@ void startRecordMatch(string cameraAddress) {
 	return;
 
 
-
-
-
 	/*
 
 	//IP camera URLs
@@ -293,7 +258,7 @@ void cutVideo(string filename, int camera, double goal) {
 
 	Mat LoadedImage;
 	// Video capture from file  opt.MOV in project directory
-	VideoCapture cap("C:\\Angles.avi");
+	VideoCapture cap("C:\\Goal.mp4");
 
 
 	// This is one of the most important thing
@@ -306,7 +271,11 @@ void cutVideo(string filename, int camera, double goal) {
 	// On windows write video into Result.wmv with codec W M V 2 at 30 FPS 
 	// and use your predefined Size for siplicity 
 
-	VideoWriter video("C:\\Users\\smatino\\Videos\\Result.wmv", CV_FOURCC('W', 'M', 'V', '2'), 30, SizeOfFrame, true);
+	String fileName = PATH_TO_REGISTRATION + to_string(time(0));
+
+	filename = fileName + ".wmv";
+
+	VideoWriter video(fileName, CV_FOURCC('W', 'M', 'V', '2'), 30, SizeOfFrame, true);
 
 	int frameCount = 0;
 
@@ -330,16 +299,13 @@ void cutVideo(string filename, int camera, double goal) {
 			resize(LoadedImage, LoadedImage, Size(800, 600));
 
 			// Preview video all frames
-			namedWindow("Video", WINDOW_AUTOSIZE);
-			imshow("Video", LoadedImage);
-			//waitKey(10);
-
-			double timeBeforeGoal = time(0) - 8;
-
+			//namedWindow("Video", WINDOW_AUTOSIZE);
+			//imshow("Video", LoadedImage);
+			
 			double framereate = cap.get(CV_CAP_PROP_FPS);
 
-			double start_frame_count = framereate * 60 * timeBeforeGoal;
-			double stop_frame_count = framereate * 60 * goal;
+			double start_frame_count = framereate  * (goal - TIME_BEFORE_GOAL);
+			double stop_frame_count = framereate * (goal + TIME_AFTER_GOAL);
 
 			// check of left shift key change its state 
 			// if Left Shift is pressed write video to file
@@ -352,12 +318,12 @@ void cutVideo(string filename, int camera, double goal) {
 				cout << "Saving video" << endl;
 				// Save video into file if  GetKeyState(VK_LSHIFT)  state changes
 				video.write(LoadedImage);
-				//waitKey(10);
-				timeBeforeGoal++;
-
+				
 			}
 			else {
-
+				if (frameCount > stop_frame_count) {
+					break;
+				}
 				// else nothing to write  only show preview
 				cout << "Only Frame preview" << endl;
 
@@ -366,213 +332,6 @@ void cutVideo(string filename, int camera, double goal) {
 		}
 	}
 
-	/*
-	Mat LoadedImage;
-	// Video capture from file  opt.MOV in project directory
-	VideoCapture cap("C:\\Angles.avi");
-
-	// Size of your output video 
-	Size SizeOfFrame = cv::Size(800, 600);
-
-	VideoWriter video("C:\\Result.wmv", CV_FOURCC('W', 'M', 'V', '2'), 30, SizeOfFrame, true);
-
-	for (;;)
-	{
-
-		bool Is = cap.grab();
-		if (Is == false) {
-
-			cout << "cannot grab video frame" << endl;
-
-		}
-		else {
-
-			// Receive video from your source 
-			cap.retrieve(LoadedImage, CV_CAP_OPENNI_BGR_IMAGE);
-
-			// Resize your video to your VideoWriter size
-			// Again sizes must correspond 
-			resize(LoadedImage, LoadedImage, Size(800, 600));
-
-			// Preview video all frames
-			namedWindow("Video", WINDOW_AUTOSIZE);
-			imshow("Video", LoadedImage);
-			//waitKey(10);
-
-			// check of left shift key change its state 
-			// if Left Shift is pressed write video to file
-
-			double timeBeforeGoal = time(0) - 30;
-			if (timeBeforeGoal < goal)
-			{
-
-				cout << "Saving video" << endl;
-				// Save video into file if  GetKeyState(VK_LSHIFT)  state changes
-				video.write(LoadedImage);				
-				timeBeforeGoal++;
-
-			}			
-		}		
-	}
-	*/
-
-	/*
-	int i = 0;
-
-	int frame_no = 0;
-
-
-	filename = "C:\\Users\\smatino\\Videos\\Angles.mp4";
-
-	char name[1000] = "C:\\Users\\smatino\\Videos\\Angles.mp4";
-
-	CvVideoWriter *writer = 0;
-
-	bool recording = false;
-
-	char fileToCut[1024];
-
-
-	double start_frame_count = FRAME_RATE * 60 * start_time_in_min;
-
-	double stop_frame_count = FRAME_RATE * 60 * stop_time_in_min;
-	
-	strncpy_s(fileToCut, filename.c_str(), sizeof(fileToCut));
-
-	fileToCut[sizeof(fileToCut) - 1] = 0;
-
-	CvCapture* capture = cvCreateFileCapture(fileToCut);
-
-	IplImage* frame;
-
-	//cout << "Press 's' to start recording, 'q' to stop recording 'Esc' to exit" << endl;
-
-
-	while (1)
-
-	{
-
-		cout << "frame number" << frame_no++ << endl;
-
-		frame = cvQueryFrame(capture);
-
-		if (!frame)
-
-			break;
-
-		char c = cvWaitKey(33);
-
-
-
-		if (recording == false)
-
-		{
-
-			recording = true;
-
-			//printf(name, "%d.avi", i);
-
-			writer = cvCreateVideoWriter(name, CV_FOURCC('M', 'P', '4', '2'), 15, cvSize(640, 480), 1);
-
-			i++;
-
-		}
-
-
-
-		if (frame_no >= start_frame_count && frame_no<stop_frame_count)
-
-		{
-
-			cvWriteFrame(writer, frame);      // add the frame to the file
-
-											  //cvShowImage("Output", frame);
-
-		}
-
-		else if (frame_no == stop_frame_count) {
-
-			break;
-
-		}
-
-
-
-	}
-
-
-
-	cvReleaseCapture(&capture);
-
-	cvReleaseVideoWriter(&writer);
-
-	return;
-
-	*/
-
-}
-
-
-
-
-
-void saveGoalTime(double sysTimeMS) {
-
-	/*
-
-	try {
-
-		sql::Driver *driver;
-
-		sql::Connection *con;
-
-		sql::PreparedStatement *stmt;
-
-		driver = get_driver_instance();
-
-		con = driver->connect(DBHOST, USER, PASSWORD);
-	
-		con->setSchema(DATABASE);
-
-		stmt = con->prepareStatement("INSERT INTO registration(campo, timestamp, dataInsert) VALUES (?,?,?)");
-
-		stmt->setString(1, "campo1");
-
-		stmt->setDouble(2, sysTimeMS);
-
-		stmt->setDateTime(3, ctime(0));
-
-		stmt->executeUpdate();
-
-		delete stmt;
-
-		delete con;
-		
-
-	}
-
-	catch (sql::SQLException &e) {
-
-		cout << "# ERR: SQLException in " << __FILE__;
-
-		cout << "# ERR: " << e.what();
-
-		cout << " (MySQL error code: " << e.getErrorCode();
-
-		cout << ", SQLState: " << e.getSQLState() << " )" << endl;
-
-	}
-
-	catch (Exception &ex) {
-
-		cout << "# ERR: SQLException in " << __FILE__;
-
-		cout << "# ERR: " << ex.what();
-
-		cout << " ( error code: " << ex.code;
-
-	}
-	*/
 }
 
 
@@ -581,7 +340,7 @@ void saveGoalTime(double sysTimeMS) {
 
 
 
-int startSensor(int camera, clock_t beginMatch) {
+int startSensor(int camera, double beginMatch) {
 
 
 	CvCapture *capture = 0; //The camera
@@ -799,18 +558,14 @@ int startSensor(int camera, clock_t beginMatch) {
 
 				drawCircleAndLabel(frame, p, label);
 
+				//Goal Segnato 
+				double goalTime = time(0);
+				//Calcolo a che minuto c'è stato il goal
+				double goalInSec = goalTime - beginMatch;
 
-
-				double sysTime = time(0);
-
-				double sysTimeMS = sysTime * 1000;
-
-
-				//saveGoalTime(sysTimeMS);
 				//Effettuo il taglio del file tramite thread
-				std:thread t1(cutVideo,"",camera, time(0));
-
-				
+				std:thread c1(cutVideo,"",camera, goalInSec);	
+				c1.join();
 
 			}
 
@@ -833,9 +588,6 @@ int startSensor(int camera, clock_t beginMatch) {
 		key = cvWaitKey(1);
 
 	}
-
-
-
 }
 
 
