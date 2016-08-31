@@ -1,0 +1,6 @@
+#file name is configuration.txt
+#-------------------------------
+PATH_TO_REGISTRATION = C:\\Users\\salvatore\\Videos\\
+PATH_TO_SAVE_GOAL = C:\\Users\\salvatore\\Videos\\Goal_
+url = http://www.pbs.org/newshour/
+#end of file

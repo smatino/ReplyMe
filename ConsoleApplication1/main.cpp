@@ -17,6 +17,7 @@
 #include <thread>
 #include <ctime>
 #include "opencv2\highgui.hpp"
+#include "Properties.h"
 
 
 
@@ -32,11 +33,11 @@ void startRecordMatch(string);
 
 void cutVideo(string, int, double);
 
-//void saveGoalTime(double);
-
 int startSensor(int, double);
 
 String getCurrentDate();
+
+void inizializeProperties();
 
 
 const int MIN_IDENT = 50;
@@ -49,12 +50,14 @@ const int MATCHES_THRESH = 3;
 const int HUE_BINS = 32;
 const int TIME_BEFORE_GOAL = 8;
 const int TIME_AFTER_GOAL = 3;
-const String PATH_TO_REGISTRATION = "C:\\Users\\salvatore\\Videos\\Goal_";
+String registrationPath;
+String savingPath;
 
 
 int main(int argc, char *argv[]) {
 
-
+	inizializeProperties();
+	
 	//Segno l'inizio della partita per capire come calcolare il tempo
 	double startMatch = time(0);
 
@@ -156,7 +159,7 @@ void startRecordMatch(string cameraAddress) {
 
 	int frame_height = vcap.get(CV_CAP_PROP_FRAME_HEIGHT);
 
-	VideoWriter video("C:\\Users\\salvatore\\Videos\\"+ getCurrentDate()+"\\"+cameraAddress+".avi", CV_FOURCC('M', 'J', 'P', 'G'), 10, Size(frame_width, frame_height), true);
+	VideoWriter video(registrationPath+ getCurrentDate()+"\\"+cameraAddress+".avi", CV_FOURCC('M', 'J', 'P', 'G'), 10, Size(frame_width, frame_height), true);
 
 	for (;;) {
 
@@ -255,7 +258,7 @@ void cutVideo(string fileFromOppositeCamera, int camera, double goal) {
 
 	Mat LoadedImage;
 	// Video capture from file  opt.MOV in project directory
-	VideoCapture cap("C:\\Goal.mp4");
+	VideoCapture cap(registrationPath+"\\AllMatch.mp4");
 
 
 	// This is one of the most important thing
@@ -268,7 +271,7 @@ void cutVideo(string fileFromOppositeCamera, int camera, double goal) {
 	// On windows write video into Result.wmv with codec W M V 2 at 30 FPS 
 	// and use your predefined Size for siplicity 
 
-	String fileName = PATH_TO_REGISTRATION + to_string(time(0));
+	String fileName = registrationPath + to_string(time(0));
 
 	fileName = fileName + ".wmv";
 
@@ -544,4 +547,23 @@ String getCurrentDate() {
 	sprintf(date, "%02d%02d%04d", timeinfo->tm_mday, timeinfo->tm_mon + 1, timeinfo->tm_year +1900);
 
 	return date;
+}
+
+
+void inizializeProperties() {
+	
+	Properties props;
+
+	props.Read("configuration.txt");
+
+	if (!props.GetValue("PATH_TO_REGISTRATION", registrationPath)) {
+		// not found
+		registrationPath = "C:\\Goal_";
+	}
+
+	if (!props.GetValue("PATH_TO_SAVE_GOAL", savingPath)) {
+		// not found
+		savingPath = "C:\\";
+	}
+
 }
