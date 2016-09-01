@@ -261,19 +261,12 @@ void cutVideo(string fileFromOppositeCamera,  double goal) {
 
 
 	Mat LoadedImage;
-	// Video capture from file  opt.MOV in project directory
+	//Recupero il video dalla posizione originale della telecamera opposta
 	VideoCapture cap(registrationPath + getCurrentDate() + "\\" + fileFromOppositeCamera + ".avi");
 
 
-	// This is one of the most important thing
-	// Sizes
-	//Your VideoWriter Size must correspond with input video.
-
 	// Size of your output video 
 	Size SizeOfFrame = cv::Size(800, 600);
-
-	// On windows write video into Result.wmv with codec W M V 2 at 30 FPS 
-	// and use your predefined Size for siplicity 
 
 	String fileName = registrationPath + to_string(time(0));
 
@@ -295,7 +288,7 @@ void cutVideo(string fileFromOppositeCamera,  double goal) {
 		}
 		else {
 
-			// Receive video from your source 
+			// Recupera il video dalla sorgente
 			cap.retrieve(LoadedImage, CV_CAP_OPENNI_BGR_IMAGE);
 
 			// Resize your video to your VideoWriter size
@@ -377,18 +370,12 @@ int startSensor(char *cameraIP, double beginMatch) {
 	//Used as storage element for Hough circles
 	CvMemStorage* storage = cvCreateMemStorage(0);
 
-
-
 	// Grayscale image
 	IplImage* grayscaleImg = cvCreateImage(cvSize(640, 480), 8/*depth*/, 1/*channels*/);
-
-
 
 	CvPoint track1 = { -1, -1 };
 
 	CvPoint track2 = { -1, -1 };
-
-
 
 	std::deque<CvSeq*> samples;
 
@@ -402,8 +389,6 @@ int startSensor(char *cameraIP, double beginMatch) {
 
 		if (!frame) break;
 
-
-
 		std::deque<CvSeq*> stableCircles;
 
 		//show the raw image in one of the windows
@@ -411,8 +396,6 @@ int startSensor(char *cameraIP, double beginMatch) {
 		//cvShowImage( "raw_video", frame );
 
 		CvSeq* circles = getCirclesInImage(frame, storage, grayscaleImg);
-
-
 
 		//Iterate through the list of circles found by cvHoughCircles()
 
