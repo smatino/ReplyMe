@@ -31,9 +31,9 @@ bool circlesBeHomies(float*, float*);
 
 void startRecordMatch(string);
 
-void cutVideo(string, int, double);
+void cutVideo(string, double);
 
-int startSensor(int, double);
+int startSensor(char *, double);
 
 String getCurrentDate();
 
@@ -52,6 +52,10 @@ const int TIME_BEFORE_GOAL = 8;
 const int TIME_AFTER_GOAL = 3;
 String registrationPath;
 String savingPath;
+String ipCamera1;
+String ipCamera2;
+char * ipSensoreCamera1;
+char * ipSensoreCamera2;
 
 
 int main(int argc, char *argv[]) {
@@ -62,10 +66,10 @@ int main(int argc, char *argv[]) {
 	double startMatch = time(0);
 
 	//Avvio le telecamere in multithread cattura pallone(thread porta)
-	std::thread t1(startSensor, 0, startMatch);// , t2(startSensor, 1, startMatch);
+	std::thread t1(startSensor, ipSensoreCamera1, startMatch);// , t2(startSensor, ipSensoreCamera2, startMatch);
 
 	//Avvio dei thread che si occupano della registrazione della partita (1 thread per camera)
-	//std:thread t3(startRecordMatch, "http://192.168.226.102:8080/video?x.mjpeg"), t4(startRecordMatch, "http://192.168.226.102:8080/video?x.mjpeg");
+	//std:thread t3(startRecordMatch, ipCamera1), t4(startRecordMatch, ipCamera2);
 
 
 	t1.join();
@@ -253,12 +257,12 @@ void startRecordMatch(string cameraAddress) {
 }
 
 
-void cutVideo(string fileFromOppositeCamera, int camera, double goal) {
+void cutVideo(string fileFromOppositeCamera,  double goal) {
 
 
 	Mat LoadedImage;
 	// Video capture from file  opt.MOV in project directory
-	VideoCapture cap(registrationPath+"\\AllMatch.mp4");
+	VideoCapture cap(registrationPath + getCurrentDate() + "\\" + fileFromOppositeCamera + ".avi");
 
 
 	// This is one of the most important thing
@@ -331,7 +335,7 @@ void cutVideo(string fileFromOppositeCamera, int camera, double goal) {
 
 
 
-int startSensor(int camera, double beginMatch) {
+int startSensor(char *cameraIP, double beginMatch) {
 
 
 	CvCapture *capture = 0; //The camera
@@ -339,11 +343,12 @@ int startSensor(int camera, double beginMatch) {
 	IplImage* frame = 0; //The images you bring out of the camera
 
 	//Open the camera
-	capture = cvCaptureFromCAM(camera);
+	capture = cvCaptureFromFile(cameraIP);
+	//capture = cvCaptureFromCAM(0);
 
 	if (!capture) {
 
-		printf("Non riesco a connettermi al sensore camera N:  %d\n " + camera);
+		//printf("Non riesco a connettermi al sensore camera N:  %d\n " + cameraIP);
 
 		return 1;
 
@@ -507,8 +512,17 @@ int startSensor(int camera, double beginMatch) {
 				//Calcolo a che minuto c'è stato il goal
 				double goalInSec = goalTime - beginMatch;
 
+				String videoDaTagliare;
+
+				if (strcmp(cameraIP, ipSensoreCamera1)) {
+					videoDaTagliare = ipCamera1;
+				}
+				else {
+					videoDaTagliare = ipCamera2;
+				}
+
 				//Effettuo il taglio del file tramite thread
-				std:thread c1(cutVideo,"",camera, goalInSec);	
+				std:thread c1(cutVideo, videoDaTagliare, goalInSec);
 				c1.detach();
 
 			}
@@ -556,6 +570,8 @@ void inizializeProperties() {
 
 	props.Read("configuration.txt");
 
+	props.GetValue("PATH_TO_REGISTRATION", registrationPath);
+
 	if (!props.GetValue("PATH_TO_REGISTRATION", registrationPath)) {
 		// not found
 		registrationPath = "C:\\Goal_";
@@ -565,5 +581,26 @@ void inizializeProperties() {
 		// not found
 		savingPath = "C:\\";
 	}
+
+	props.GetValue("IP_CAMERA_1", ipCamera1);
+
+	props.GetValue("IP_CAMERA_2", ipCamera2);
+
+	String appoggio1;String appoggio2;
+
+	props.GetValue("IP_SENSORE_CAMERA_1", appoggio1);
+	props.GetValue("IP_SENSORE_CAMERA_2", appoggio2);
+	
+	
+	ipSensoreCamera1 = new char[appoggio1.size() + 1];
+	std::copy(appoggio1.begin(), appoggio1.end(), ipSensoreCamera1);
+	ipSensoreCamera1[appoggio1.size()] = '\0'; // don't forget the terminating 0								
+	delete[] ipSensoreCamera1;
+
+	ipSensoreCamera2 = new char[appoggio2.size() + 1];
+	std::copy(appoggio2.begin(), appoggio2.end(), ipSensoreCamera2);
+	ipSensoreCamera2[appoggio2.size()] = '\0'; // don't forget the terminating 0								
+	delete[] ipSensoreCamera2;
+	
 
 }
