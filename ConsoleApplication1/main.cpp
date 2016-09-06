@@ -71,13 +71,13 @@ int main(int argc, char *argv[]) {
 	double startMatch = time(0);
 
 	//Avvio le telecamere in multithread cattura pallone(thread porta)
-	//std::thread t1(startSensor, ipSensoreCamera1, startMatch);// , t2(startSensor, ipSensoreCamera2, startMatch);
+	std::thread t1(startSensor, ipSensoreCamera1, startMatch);// , t2(startSensor, ipSensoreCamera2, startMatch);
 
 	//Avvio dei thread che si occupano della registrazione della partita (1 thread per camera)
    std:thread t3(startRecordMatch, ipCamera1);// t4(startRecordMatch, ipCamera2);
 
 
-	//t1.join();
+	t1.join();
 	//t2.join();
 
 	t3.join();
@@ -193,18 +193,18 @@ void startRecordMatch(string cameraAddress) {
 
 void cutVideo(string fileFromOppositeCamera,  double goal) {
 
-
+	String directoryPath = registrationPath + getCurrentDate();
 	Mat LoadedImage;
 	//Recupero il video dalla posizione originale della telecamera opposta
-	VideoCapture cap(registrationPath + getCurrentDate() + "\\" + fileFromOppositeCamera + ".avi");
+	VideoCapture cap(directoryPath  + "\\camera1.avi");
 
 
 	// Size of your output video 
 	Size SizeOfFrame = cv::Size(800, 600);
 
-	String fileName = registrationPath + to_string(time(0));
+	String fileName = directoryPath;
 
-	fileName = fileName + ".wmv";
+	fileName += "\\Goal_" + to_string(time(0)) + ".wmv";
 
 	VideoWriter video(fileName, CV_FOURCC('W', 'M', 'V', '2'), 30, SizeOfFrame, true);
 
@@ -441,6 +441,8 @@ int startSensor(char *cameraIP, double beginMatch) {
 				//Effettuo il taglio del file tramite thread
 				std:thread c1(cutVideo, videoDaTagliare, goalInSec);
 				c1.detach();
+				
+				Sleep(10000);
 
 			}
 
