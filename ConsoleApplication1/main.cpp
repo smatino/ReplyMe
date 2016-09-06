@@ -18,6 +18,9 @@
 #include <ctime>
 #include "opencv2\highgui.hpp"
 #include "Properties.h"
+#include <direct.h>
+#include <sys/stat.h>
+
 
 
 
@@ -38,6 +41,8 @@ int startSensor(char *, double);
 String getCurrentDate();
 
 void inizializeProperties();
+
+void checkFolder(String dirName);
 
 
 const int MIN_IDENT = 50;
@@ -66,16 +71,16 @@ int main(int argc, char *argv[]) {
 	double startMatch = time(0);
 
 	//Avvio le telecamere in multithread cattura pallone(thread porta)
-	std::thread t1(startSensor, ipSensoreCamera1, startMatch);// , t2(startSensor, ipSensoreCamera2, startMatch);
+	//std::thread t1(startSensor, ipSensoreCamera1, startMatch);// , t2(startSensor, ipSensoreCamera2, startMatch);
 
 	//Avvio dei thread che si occupano della registrazione della partita (1 thread per camera)
-	//std:thread t3(startRecordMatch, ipCamera1), t4(startRecordMatch, ipCamera2);
+   std:thread t3(startRecordMatch, ipCamera1);// t4(startRecordMatch, ipCamera2);
 
 
-	t1.join();
+	//t1.join();
 	//t2.join();
 
-	//t3.join();
+	t3.join();
 	//t4.join();
 
 }
@@ -121,10 +126,6 @@ float eucdist(CvPoint c1, CvPoint c2) {
 
 void drawCircleAndLabel(IplImage* frame, float* p, const char* label) {
 
-	//Draw the circle on the original image
-
-	//There's lots of drawing commands you can use!
-
 	CvFont font;
 
 	cvInitFont(&font, CV_FONT_HERSHEY_SIMPLEX, 1, 1, 0.0, 1, 8);
@@ -149,9 +150,9 @@ bool circlesBeHomies(float* c1, float* c2) {
 
 void startRecordMatch(string cameraAddress) {
 
-	VideoCapture vcap(cameraAddress);
+	VideoCapture vcap;
 
-	if (!vcap.isOpened()) {
+	if (!vcap.open(cameraAddress)) {
 
 		cout << "Errore nella fase di restrazione della camera " << endl;
 
@@ -159,12 +160,17 @@ void startRecordMatch(string cameraAddress) {
 
 	}
 
-	int frame_width = vcap.get(CV_CAP_PROP_FRAME_WIDTH);
+	int ex = static_cast<int>(vcap.get(CV_CAP_PROP_POS_AVI_RATIO));     // Get Codec Type- Int form
+	Size S = Size((int)vcap.get(CV_CAP_PROP_FRAME_WIDTH),    // Acquire input size
+				(int)vcap.get(CV_CAP_PROP_FRAME_HEIGHT));
 
-	int frame_height = vcap.get(CV_CAP_PROP_FRAME_HEIGHT);
+	VideoWriter video;
 
-	VideoWriter video(registrationPath+ getCurrentDate()+"\\"+cameraAddress+".avi", CV_FOURCC('M', 'J', 'P', 'G'), 10, Size(frame_width, frame_height), true);
+	String directoryPath = registrationPath + getCurrentDate();
 
+	checkFolder(directoryPath);
+
+	video.open(directoryPath+"\\camera1.avi", ex, vcap.get(CV_CAP_PROP_FPS), S, true);
 	for (;;) {
 
 		Mat frame;
@@ -264,8 +270,8 @@ int startSensor(char *cameraIP, double beginMatch) {
 	IplImage* frame = 0; //The images you bring out of the camera
 
 	//Open the camera
-	capture = cvCaptureFromFile(cameraIP);
-	//capture = cvCaptureFromCAM(0);
+	//capture = cvCaptureFromFile(cameraIP);
+	capture = cvCaptureFromCAM(0);
 
 	if (!capture) {
 
@@ -514,4 +520,26 @@ void inizializeProperties() {
 	delete[] ipSensoreCamera2;
 	
 
+}
+
+
+ void checkFolder(String dirName) {
+
+	 struct stat st;
+	 if (stat(dirName.c_str(), &st) == 0)
+	 {
+		 cout << "The directory exists." << endl;
+	 }
+	 else
+	 {
+		 int mkdirResult = _mkdir(dirName.c_str());
+		 if (mkdirResult == 0)
+		 {
+			 cout << "The directory is created." << endl;
+		 }
+		 else
+		 {
+			 cout << "The directory creation failed with error: " + mkdirResult << endl;
+		 }
+	 }
 }

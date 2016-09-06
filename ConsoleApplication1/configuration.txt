@@ -1,9 +1,9 @@
 #file name is configuration.txt
 #-------------------------------
-PATH_TO_REGISTRATION= C:\\Users\\salvatore\\Videos\\
-PATH_TO_SAVE_GOAL= C:\\Users\\salvatore\\Videos\\Goal_
-IP_CAMERA_1= rtsp://192.168.1.19:554/0/1:1/main
-IP_CAMERA_2= http://192.168.226.102:8080/video?x.mjpeg
-IP_SENSORE_CAMERA_1= http://192.168.226.102:8080/video?x.mjpeg
-IP_SENSORE_CAMERA_2= 1
+PATH_TO_REGISTRATION=C:\\Users\\smatino\\Videos\\
+PATH_TO_SAVE_GOAL=C:\\Users\\salvatore\\Videos\\Goal_
+IP_CAMERA_1=http://iphone-streaming.ustream.tv/uhls/20059572/streams/live/iphone/playlist.m3u8
+IP_CAMERA_2=http://192.168.226.102:8080/video?x.mjpeg
+IP_SENSORE_CAMERA_1=0
+IP_SENSORE_CAMERA_2=1
 #end of file
