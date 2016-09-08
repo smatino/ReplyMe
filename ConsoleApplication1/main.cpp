@@ -98,17 +98,8 @@ CvSeq* getCirclesInImage(IplImage* frame, CvMemStorage* storage, IplImage* grays
 	cvSmooth(grayscaleImg, grayscaleImg, CV_GAUSSIAN, 7, 9);
 
 	//Detect the circles in the image
-	CvSeq* circles = cvHoughCircles(grayscaleImg,storage,
-
-		CV_HOUGH_GRADIENT,
-
-		2, // inverse ratio of the accumulator resolution
-
-		grayscaleImg->imageSize / 2, // minDist
-
-		200,
-
-		100);
+	CvSeq* circles = cvHoughCircles(grayscaleImg,storage,CV_HOUGH_GRADIENT,1,grayscaleImg->imageSize,200,100);
+	//CvSeq* circles = cvHoughCircles(grayscaleImg, storage, CV_HOUGH_GRADIENT, 2, grayscaleImg->imageSize / 2, 200, 100);
 
 	return circles;
 
@@ -215,13 +206,9 @@ void cutVideo(string fileFromOppositeCamera,  double goal) {
 
 		bool Is = cap.grab();
 	
-		if (Is == false) {
+		if (Is != false) {
 
-			cout << "cannot grab video frame" << endl;
-
-		}
-		else {
-
+			
 			// Recupera il video dalla sorgente
 			cap.retrieve(LoadedImage, CV_CAP_OPENNI_BGR_IMAGE);
 
@@ -237,17 +224,21 @@ void cutVideo(string fileFromOppositeCamera,  double goal) {
 
 			double start_frame_count = framereate  * (goal - TIME_BEFORE_GOAL);
 			double stop_frame_count = framereate * (goal + TIME_AFTER_GOAL);
+			
+
 
 			frameCount++;
 			
 			if(frameCount >= start_frame_count&&frameCount<stop_frame_count)
 			{
 
+				cout << "Salvataggio in corso .... \n" << endl;
 				//Salvataggio del video su un nuovo file
 				video.write(LoadedImage);
 				
 			}
 			else if (frameCount > stop_frame_count) {
+				    cout << "Salvataggio completato .... \n" << endl;
 					break;
 			}				
 
@@ -276,40 +267,20 @@ int startSensor(char *cameraIP, double beginMatch) {
 	if (!capture) {
 
 		//printf("Non riesco a connettermi al sensore camera N:  %d\n " + *cameraIP);
-
 		return 1;
-
 	}
-
 	try {
-
 		frame = cvQueryFrame(capture);
-
 	}
-
 	catch (...) {
-
 		throw;
-
 	}
-
-	//Create two output windows
-
-	//cvNamedWindow( "raw_video", CV_WINDOW_AUTOSIZE );
 
 	cvNamedWindow("processed_video", CV_WINDOW_AUTOSIZE);
-
-
-
 	//Used as storage element for Hough circles
 	CvMemStorage* storage = cvCreateMemStorage(0);
-
 	// Grayscale image
 	IplImage* grayscaleImg = cvCreateImage(cvSize(640, 480), 8/*depth*/, 1/*channels*/);
-
-	CvPoint track1 = { -1, -1 };
-
-	CvPoint track2 = { -1, -1 };
 
 	std::deque<CvSeq*> samples;
 
@@ -324,10 +295,6 @@ int startSensor(char *cameraIP, double beginMatch) {
 		if (!frame) break;
 
 		std::deque<CvSeq*> stableCircles;
-
-		//show the raw image in one of the windows
-
-		//cvShowImage( "raw_video", frame );
 
 		CvSeq* circles = getCirclesInImage(frame, storage, grayscaleImg);
 
@@ -442,7 +409,7 @@ int startSensor(char *cameraIP, double beginMatch) {
 				std:thread c1(cutVideo, videoDaTagliare, goalInSec);
 				c1.detach();
 				
-				Sleep(10000);
+				//Sleep(10000);
 
 			}
 
@@ -530,18 +497,18 @@ void inizializeProperties() {
 	 struct stat st;
 	 if (stat(dirName.c_str(), &st) == 0)
 	 {
-		 cout << "The directory exists." << endl;
+		 cout << "La directory esiste." << endl;
 	 }
 	 else
 	 {
 		 int mkdirResult = _mkdir(dirName.c_str());
 		 if (mkdirResult == 0)
 		 {
-			 cout << "The directory is created." << endl;
+			 cout << "Creazione directory Effettuata" << endl;
 		 }
 		 else
 		 {
-			 cout << "The directory creation failed with error: " + mkdirResult << endl;
+			 cout << "Creazione directory fallita: " + mkdirResult << endl;
 		 }
 	 }
 }
