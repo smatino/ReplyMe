@@ -42,7 +42,7 @@ String getCurrentDate();
 
 void inizializeProperties();
 
-void checkFolder(String dirName);
+int checkFolder(String dirName);
 
 
 const int MIN_IDENT = 50;
@@ -98,8 +98,11 @@ CvSeq* getCirclesInImage(IplImage* frame, CvMemStorage* storage, IplImage* grays
 	cvSmooth(grayscaleImg, grayscaleImg, CV_GAUSSIAN, 7, 9);
 
 	//Detect the circles in the image
-	CvSeq* circles = cvHoughCircles(grayscaleImg,storage,CV_HOUGH_GRADIENT,1,grayscaleImg->imageSize,200,100);
-	//CvSeq* circles = cvHoughCircles(grayscaleImg, storage, CV_HOUGH_GRADIENT, 2, grayscaleImg->imageSize / 2, 200, 100);
+	//CvSeq* circles = cvHoughCircles(grayscaleImg,storage,CV_HOUGH_GRADIENT,1,grayscaleImg->imageSize,200,100);
+	CvSeq* circles = cvHoughCircles(grayscaleImg, storage, CV_HOUGH_GRADIENT, 1, grayscaleImg->imageSize /2, 100, 50); 
+	
+
+	// pallina 100, 50
 
 	return circles;
 
@@ -159,7 +162,9 @@ void startRecordMatch(string cameraAddress) {
 
 	String directoryPath = registrationPath + getCurrentDate();
 
-	checkFolder(directoryPath);
+	if (checkFolder(directoryPath) != 0) { // Controllo che la directory di salvataggio sia stata creata correttamente
+		return;
+	}
 
 	video.open(directoryPath+"\\camera1.avi", ex, vcap.get(CV_CAP_PROP_FPS), S, true);
 	for (;;) {
@@ -492,12 +497,13 @@ void inizializeProperties() {
 }
 
 
- void checkFolder(String dirName) {
+ int checkFolder(String dirName) {
 
 	 struct stat st;
 	 if (stat(dirName.c_str(), &st) == 0)
 	 {
 		 cout << "La directory esiste." << endl;
+		 return 0;
 	 }
 	 else
 	 {
@@ -505,10 +511,12 @@ void inizializeProperties() {
 		 if (mkdirResult == 0)
 		 {
 			 cout << "Creazione directory Effettuata" << endl;
+			 return 0;
 		 }
 		 else
 		 {
-			 cout << "Creazione directory fallita: " + mkdirResult << endl;
+			 cout << "Creazione directory fallita: " << endl;
+			 return mkdirResult;
 		 }
 	 }
 }

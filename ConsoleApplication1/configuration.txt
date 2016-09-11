@@ -1,7 +1,7 @@
 #file name is configuration.txt
 #-------------------------------
-PATH_TO_REGISTRATION=C:\\Users\\smatino\\Videos\\
-PATH_TO_SAVE_GOAL=C:\\Users\\smatino\\Videos\\Goal_
+PATH_TO_REGISTRATION=C:\Users\salvatore\Videos\
+PATH_TO_SAVE_GOAL=C:\\Users\\salvatore\\Video\\Goal_
 IP_CAMERA_1=http://iphone-streaming.ustream.tv/uhls/20059572/streams/live/iphone/playlist.m3u8
 IP_CAMERA_2=http://192.168.226.102:8080/video?x.mjpeg
 IP_SENSORE_CAMERA_1=0
