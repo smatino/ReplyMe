@@ -89,17 +89,28 @@ int main(int argc, char *argv[]) {
 
 CvSeq* getCirclesInImage(IplImage* frame, CvMemStorage* storage, IplImage* grayscaleImg) {
 
+	CvSize size = cvSize(640, 480);
 	// houghification
+	CvScalar hsv_min = cvScalar(150, 84, 130, 0);
+    CvScalar hsv_max = cvScalar(358, 256, 255, 0);
+
+	IplImage *  hsv_frame = cvCreateImage(size, IPL_DEPTH_8U, 3);
+	IplImage*  thresholded = cvCreateImage(size, IPL_DEPTH_8U, 1);
 
 	// Convert to a single-channel, grayspace image
-	cvCvtColor(frame, grayscaleImg, CV_BGR2GRAY);
+	cvCvtColor(frame, hsv_frame, CV_BGR2HSV);
+
+	// Filter out colors which are out of range.
+	cvInRangeS(hsv_frame, hsv_min, hsv_max, thresholded);
 
 	// Gaussian filter for less noise
-	cvSmooth(grayscaleImg, grayscaleImg, CV_GAUSSIAN, 7, 9);
+	//cvSmooth(grayscaleImg, grayscaleImg, CV_GAUSSIAN, 7, 9);
+	cvSmooth(thresholded, thresholded, CV_GAUSSIAN, 9, 9);
 
 	//Detect the circles in the image
-	CvSeq* circles = cvHoughCircles(grayscaleImg,storage,CV_HOUGH_GRADIENT,1,grayscaleImg->imageSize,200,100);
-	//CvSeq* circles = cvHoughCircles(grayscaleImg, storage, CV_HOUGH_GRADIENT, 2, grayscaleImg->imageSize / 2, 200, 100);
+	//CvSeq* circles = cvHoughCircles(grayscaleImg,storage,CV_HOUGH_GRADIENT,1,grayscaleImg->imageSize,200,100);
+	
+	CvSeq* circles = cvHoughCircles(thresholded, storage, CV_HOUGH_GRADIENT, 2, thresholded-> height / 4, 100, 50, 10, 400);
 
 	return circles;
 
