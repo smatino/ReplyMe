@@ -42,7 +42,7 @@ String getCurrentDate();
 
 void inizializeProperties();
 
-void checkFolder(String dirName);
+int checkFolder(String dirName);
 
 
 const int MIN_IDENT = 50;
@@ -170,7 +170,9 @@ void startRecordMatch(string cameraAddress) {
 
 	String directoryPath = registrationPath + getCurrentDate();
 
-	checkFolder(directoryPath);
+	if (checkFolder(directoryPath) != 0) { // Controllo che la directory di salvataggio sia stata creata correttamente
+		return;
+	}
 
 	video.open(directoryPath+"\\camera1.avi", ex, vcap.get(CV_CAP_PROP_FPS), S, true);
 	for (;;) {
@@ -503,12 +505,13 @@ void inizializeProperties() {
 }
 
 
- void checkFolder(String dirName) {
+ int checkFolder(String dirName) {
 
 	 struct stat st;
 	 if (stat(dirName.c_str(), &st) == 0)
 	 {
 		 cout << "La directory esiste." << endl;
+		 return 0;
 	 }
 	 else
 	 {
@@ -516,10 +519,12 @@ void inizializeProperties() {
 		 if (mkdirResult == 0)
 		 {
 			 cout << "Creazione directory Effettuata" << endl;
+			 return 0;
 		 }
 		 else
 		 {
-			 cout << "Creazione directory fallita: " + mkdirResult << endl;
+			 cout << "Creazione directory fallita: " << endl;
+			 return mkdirResult;
 		 }
 	 }
 }
