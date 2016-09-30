@@ -44,6 +44,8 @@ void inizializeProperties();
 
 int checkFolder(String dirName);
 
+void trackObject(IplImage* imgThresh);
+
 
 const int MIN_IDENT = 50;
 const int MAX_RAD_DIFF = 10;
@@ -74,13 +76,13 @@ int main(int argc, char *argv[]) {
 	std::thread t1(startSensor, ipSensoreCamera1, startMatch);// , t2(startSensor, ipSensoreCamera2, startMatch);
 
 	//Avvio dei thread che si occupano della registrazione della partita (1 thread per camera)
-   std:thread t3(startRecordMatch, ipCamera1);// t4(startRecordMatch, ipCamera2);
+  // std:thread t3(startRecordMatch, ipCamera1);// t4(startRecordMatch, ipCamera2);
 
 
 	t1.join();
 	//t2.join();
 
-	t3.join();
+	//t3.join();
 	//t4.join();
 
 }
@@ -115,6 +117,7 @@ CvSeq* getCirclesInImage(IplImage* frame, CvMemStorage* storage, IplImage* grays
 	return circles;
 
 }
+
 
 float eucdist(CvPoint c1, CvPoint c2) {
 
@@ -173,7 +176,6 @@ void startRecordMatch(string cameraAddress) {
 	if (checkFolder(directoryPath) != 0) { // Controllo che la directory di salvataggio sia stata creata correttamente
 		return;
 	}
-
 	video.open(directoryPath+"\\camera1.avi", ex, vcap.get(CV_CAP_PROP_FPS), S, true);
 	for (;;) {
 
@@ -290,29 +292,30 @@ int startSensor(char *cameraIP, double beginMatch) {
 	}
 
 	cvNamedWindow("processed_video", CV_WINDOW_AUTOSIZE);
+
 	//Used as storage element for Hough circles
 	CvMemStorage* storage = cvCreateMemStorage(0);
 	// Grayscale image
 	IplImage* grayscaleImg = cvCreateImage(cvSize(640, 480), 8/*depth*/, 1/*channels*/);
-
+	
 	std::deque<CvSeq*> samples;
 
-	int key = 0;
+    int key = 0;
 
 	while (key != 27 /*escape key to quit*/) {
 
+		
 		//Query for the next frame
-
 		frame = cvQueryFrame(capture);
 
 		if (!frame) break;
 
-		std::deque<CvSeq*> stableCircles;
-
+		std::deque<CvSeq*> stableCircles;		
 		CvSeq* circles = getCirclesInImage(frame, storage, grayscaleImg);
 
+		
+		
 		//Iterate through the list of circles found by cvHoughCircles()
-
 		for (int i = 0; i < circles->total; i++) {
 
 			int matches = 0;
@@ -427,8 +430,7 @@ int startSensor(char *cameraIP, double beginMatch) {
 			}
 
 		}
-
-		samples.push_back(circles);
+		//samples.push_back(circles);
 
 		if (samples.size() > HISTORY_SIZE) {
 
@@ -437,9 +439,6 @@ int startSensor(char *cameraIP, double beginMatch) {
 		}
 
 		cvShowImage("processed_video", frame);
-
-
-
 		//Get the last key that's been pressed for input
 
 		key = cvWaitKey(1);
