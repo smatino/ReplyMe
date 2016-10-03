@@ -63,7 +63,7 @@ String ipCamera1;
 String ipCamera2;
 char * ipSensoreCamera1;
 char * ipSensoreCamera2;
-
+/*
 
 int main(int argc, char *argv[]) {
 
@@ -86,6 +86,8 @@ int main(int argc, char *argv[]) {
 	//t4.join();
 
 }
+
+*/
 
 
 
