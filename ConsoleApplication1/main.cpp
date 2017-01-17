@@ -63,7 +63,7 @@ String ipCamera1;
 String ipCamera2;
 char * ipSensoreCamera1;
 char * ipSensoreCamera2;
-/*
+
 
 int main(int argc, char *argv[]) {
 
@@ -76,18 +76,17 @@ int main(int argc, char *argv[]) {
 	std::thread t1(startSensor, ipSensoreCamera1, startMatch);// , t2(startSensor, ipSensoreCamera2, startMatch);
 
 	//Avvio dei thread che si occupano della registrazione della partita (1 thread per camera)
-  // std:thread t3(startRecordMatch, ipCamera1);// t4(startRecordMatch, ipCamera2);
+std:thread t3(startRecordMatch, ipCamera1);// , t4(startRecordMatch, ipCamera2);
 
 
 	t1.join();
 	//t2.join();
 
-	//t3.join();
+	t3.join();
 	//t4.join();
 
 }
 
-*/
 
 
 
